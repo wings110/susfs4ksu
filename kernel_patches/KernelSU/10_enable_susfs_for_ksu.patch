@@ -284,14 +284,16 @@ index ba8b73f2..9af28285 100644
 -bool is_manager_apk(char *path)
 +bool ksu_is_manager_apk(char *path)
  {
+-	return check_v2_signature(path, EXPECTED_NEXT_SIZE, EXPECTED_NEXT_HASH);
+-}
+\ 文件末尾没有换行符
 +#ifdef CONFIG_KSU_SUSFS
-+	return (check_v2_signature(path, EXPECTED_SIZE, EXPECTED_HASH) ||
-+			check_v2_signature(path, 384, "7e0c6d7278a3bb8e364e0fcba95afaf3666cf5ff3c245a3b63c8833bd0445cc4")); // 5ec1cff
++    return (check_v2_signature(path, EXPECTED_SIZE, EXPECTED_HASH) ||
++            check_v2_signature(path, 384, "7e0c6d7278a3bb8e364e0fcba95afaf3666cf5ff3c245a3b63c8833bd0445cc4")); // 5ec1cff
 +#else
- 	return check_v2_signature(path, EXPECTED_SIZE, EXPECTED_HASH);
++    return check_v2_signature(path, EXPECTED_SIZE, EXPECTED_HASH);
 +#endif
- }
-\ No newline at end of file
++}
 diff --git a/kernel/apk_sign.h b/kernel/apk_sign.h
 index bed501c4..e02aa514 100644
 --- a/kernel/apk_sign.h
@@ -841,7 +843,7 @@ index 913867a5..6da7119a 100644
  	if (!ksu_uid_should_umount(new_uid.val)) {
  		return 0;
  	} else {
-@@ -512,31 +909,39 @@ int ksu_handle_setuid(struct cred *new, const struct cred *old)
+@@ -922,35 +922,43 @@ int ksu_handle_setuid(struct cred *new, const struct cred *old)
  #endif
  	}
  
@@ -851,30 +853,35 @@ index 913867a5..6da7119a 100644
  	// when we umount for such process, that is a disaster!
 -	bool is_zygote_child = is_zygote(old->security);
 +	bool is_zygote_child = ksu_is_zygote(old->security);
-+#endif
++#endif	
  	if (!is_zygote_child) {
  		pr_info("handle umount ignore non zygote child: %d\n",
  			current->pid);
  		return 0;
  	}
-+
++	
  #ifdef CONFIG_KSU_DEBUG
- 	// umount the target mnt
- 	pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val,
- 		current->pid);
+-	// umount the target mnt
+-	pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val,
+-		current->pid);
++       // umount the target mnt
++       pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val,
++	       current->pid);
  #endif
  
 +#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
-+	// susfs come first, and lastly umount by ksu, make sure umount in reversed order
-+	susfs_try_umount_all(new_uid.val);
++       // susfs come first, and lastly umount by ksu, make sure umount in reversed order
++       susfs_try_umount_all(new_uid.val);
 +#else
  	// fixme: use `collect_mounts` and `iterate_mount` to iterate all mountpoint and
  	// filter the mountpoint whose target is `/data/adb`
 -	try_umount("/system", true, 0);
+-	try_umount("/system_ext", true, 0);
 -	try_umount("/vendor", true, 0);
 -	try_umount("/product", true, 0);
 -	try_umount("/data/adb/modules", false, MNT_DETACH);
 +	ksu_try_umount("/system", true, 0);
++	ksu_try_umount("/system_ext", true, 0);
 +	ksu_try_umount("/vendor", true, 0);
 +	ksu_try_umount("/product", true, 0);
 +	ksu_try_umount("/data/adb/modules", false, MNT_DETACH);
@@ -885,6 +892,10 @@ index 913867a5..6da7119a 100644
 +	ksu_try_umount("/debug_ramdisk", false, MNT_DETACH);
 +	ksu_try_umount("/sbin", false, MNT_DETACH);
 +#endif
+ 	
+ 	// try umount hosts file
+-	try_umount("/system/etc/hosts", false, MNT_DETACH);
++	ksu_try_umount("/system/etc/hosts", false, MNT_DETACH);
  
  	return 0;
  }
@@ -1154,7 +1165,7 @@ index 17a25dae..5ecee39a 100644
  {
  	if (transive_to_domain(domain)) {
  		pr_err("transive domain failed.\n");
-@@ -49,14 +57,14 @@ if (!is_domain_permissive) {
+@@ -60,7 +60,7 @@
  }*/
  }
  
@@ -1162,7 +1173,8 @@ index 17a25dae..5ecee39a 100644
 +void ksu_setenforce(bool enforce)
  {
  #ifdef CONFIG_SECURITY_SELINUX_DEVELOP
- 	selinux_state.enforcing = enforce;
+ #ifdef KSU_COMPAT_USE_SELINUX_STATE
+@@ -71,7 +71,7 @@
  #endif
  }
  
@@ -1170,7 +1182,7 @@ index 17a25dae..5ecee39a 100644
 +bool ksu_getenforce()
  {
  #ifdef CONFIG_SECURITY_SELINUX_DISABLE
- 	if (selinux_state.disabled) {
+ #ifdef KSU_COMPAT_USE_SELINUX_STATE
 @@ -84,7 +92,7 @@ static inline u32 current_sid(void)
  }
  #endif
