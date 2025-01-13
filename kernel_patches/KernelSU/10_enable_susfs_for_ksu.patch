@@ -843,7 +843,7 @@ index 913867a5..6da7119a 100644
  	if (!ksu_uid_should_umount(new_uid.val)) {
  		return 0;
  	} else {
-@@ -922,35 +922,43 @@ int ksu_handle_setuid(struct cred *new, const struct cred *old)
+@@ -922,35 +922,43 @@
  #endif
  	}
  
@@ -859,19 +859,16 @@ index 913867a5..6da7119a 100644
  			current->pid);
  		return 0;
  	}
-+	
++
  #ifdef CONFIG_KSU_DEBUG
--	// umount the target mnt
--	pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val,
--		current->pid);
-+       // umount the target mnt
-+       pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val,
-+	       current->pid);
+ 	// umount the target mnt
+ 	pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val,
+ 		current->pid);
  #endif
  
 +#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
-+       // susfs come first, and lastly umount by ksu, make sure umount in reversed order
-+       susfs_try_umount_all(new_uid.val);
++	// susfs come first, and lastly umount by ksu, make sure umount in reversed order
++	susfs_try_umount_all(new_uid.val);
 +#else
  	// fixme: use `collect_mounts` and `iterate_mount` to iterate all mountpoint and
  	// filter the mountpoint whose target is `/data/adb`
@@ -891,11 +888,11 @@ index 913867a5..6da7119a 100644
 -	try_umount("/sbin", false, MNT_DETACH);
 +	ksu_try_umount("/debug_ramdisk", false, MNT_DETACH);
 +	ksu_try_umount("/sbin", false, MNT_DETACH);
-+#endif
  	
  	// try umount hosts file
 -	try_umount("/system/etc/hosts", false, MNT_DETACH);
 +	ksu_try_umount("/system/etc/hosts", false, MNT_DETACH);
++#endif
  
  	return 0;
  }
@@ -1141,7 +1138,7 @@ diff --git a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
 index 17a25dae..5ecee39a 100644
 --- a/kernel/selinux/selinux.c
 +++ b/kernel/selinux/selinux.c
-@@ -8,6 +8,14 @@
+@@ -5,6 +5,14 @@
  
  #define KERNEL_SU_DOMAIN "u:r:su:s0"
  
@@ -1156,7 +1153,7 @@ index 17a25dae..5ecee39a 100644
  static int transive_to_domain(const char *domain)
  {
  	struct cred *cred;
-@@ -37,7 +45,7 @@
+@@ -34,7 +42,7 @@ static int transive_to_domain(const char *domain)
  	return error;
  }
  
@@ -1165,7 +1162,7 @@ index 17a25dae..5ecee39a 100644
  {
  	if (transive_to_domain(domain)) {
  		pr_err("transive domain failed.\n");
-@@ -52,7 +60,7 @@
+@@ -60,7 +60,7 @@
  }*/
  }
  
@@ -1174,7 +1171,7 @@ index 17a25dae..5ecee39a 100644
  {
  #ifdef CONFIG_SECURITY_SELINUX_DEVELOP
  #ifdef KSU_COMPAT_USE_SELINUX_STATE
-@@ -63,7 +71,7 @@
+@@ -71,7 +71,7 @@
  #endif
  }
  
@@ -1183,7 +1180,7 @@ index 17a25dae..5ecee39a 100644
  {
  #ifdef CONFIG_SECURITY_SELINUX_DISABLE
  #ifdef KSU_COMPAT_USE_SELINUX_STATE
-@@ -99,7 +107,7 @@
+@@ -84,7 +92,7 @@ static inline u32 current_sid(void)
  }
  #endif
  
@@ -1192,7 +1189,7 @@ index 17a25dae..5ecee39a 100644
  {
  	char *domain;
  	u32 seclen;
-@@ -113,7 +121,7 @@
+@@ -98,7 +106,7 @@ bool is_ksu_domain()
  	return result;
  }
  
@@ -1201,7 +1198,7 @@ index 17a25dae..5ecee39a 100644
  {
  	struct task_security_struct *tsec = (struct task_security_struct *)sec;
  	if (!tsec) {
-@@ -131,6 +139,83 @@
+@@ -116,6 +124,83 @@ bool is_zygote(void *sec)
  	return result;
  }
  
