@@ -1141,7 +1141,7 @@ diff --git a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
 index 17a25dae..5ecee39a 100644
 --- a/kernel/selinux/selinux.c
 +++ b/kernel/selinux/selinux.c
-@@ -5,6 +5,14 @@
+@@ -8,6 +8,14 @@
  
  #define KERNEL_SU_DOMAIN "u:r:su:s0"
  
@@ -1156,7 +1156,7 @@ index 17a25dae..5ecee39a 100644
  static int transive_to_domain(const char *domain)
  {
  	struct cred *cred;
-@@ -34,7 +42,7 @@ static int transive_to_domain(const char *domain)
+@@ -37,7 +45,7 @@
  	return error;
  }
  
@@ -1165,7 +1165,7 @@ index 17a25dae..5ecee39a 100644
  {
  	if (transive_to_domain(domain)) {
  		pr_err("transive domain failed.\n");
-@@ -60,7 +60,7 @@
+@@ -52,7 +60,7 @@
  }*/
  }
  
@@ -1174,7 +1174,7 @@ index 17a25dae..5ecee39a 100644
  {
  #ifdef CONFIG_SECURITY_SELINUX_DEVELOP
  #ifdef KSU_COMPAT_USE_SELINUX_STATE
-@@ -71,7 +71,7 @@
+@@ -63,7 +71,7 @@
  #endif
  }
  
@@ -1183,7 +1183,7 @@ index 17a25dae..5ecee39a 100644
  {
  #ifdef CONFIG_SECURITY_SELINUX_DISABLE
  #ifdef KSU_COMPAT_USE_SELINUX_STATE
-@@ -84,7 +92,7 @@ static inline u32 current_sid(void)
+@@ -99,7 +107,7 @@
  }
  #endif
  
@@ -1192,7 +1192,7 @@ index 17a25dae..5ecee39a 100644
  {
  	char *domain;
  	u32 seclen;
-@@ -98,7 +106,7 @@ bool is_ksu_domain()
+@@ -113,7 +121,7 @@
  	return result;
  }
  
@@ -1201,7 +1201,7 @@ index 17a25dae..5ecee39a 100644
  {
  	struct task_security_struct *tsec = (struct task_security_struct *)sec;
  	if (!tsec) {
-@@ -116,6 +124,83 @@ bool is_zygote(void *sec)
+@@ -131,6 +139,83 @@
  	return result;
  }
  
